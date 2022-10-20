@@ -1,2 +1,6 @@
 build/*
 *.swp
+.vscode/*
+*.jpeg
+*.png
+*.jpg
