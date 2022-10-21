@@ -1,5 +1,6 @@
+#include <cassert>
 #include <stdio.h>
-#include <cuda.h>
+#include <spdlog/spdlog.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -9,34 +10,63 @@
 
 #include "image.hpp"
 
-__global__ void my_kernel()
+void test_grayscale(const char* file)
 {
-    int i = blockDim.x * blockIdx.x + threadIdx.x;
-    printf("Thread n %d\n", i);
+    int rc;
+    int width, height, channels;
+    size_t pitch;
+
+    u_char* img = stbi_load(file, &width, &height, &channels, 0);
+
+    if (img == nullptr)
+    {
+        spdlog::error("Could not find image %s", file);
+        return;
+    }
+
+    spdlog::info("Loaded image {} | {}x{}x{}", file, width, height, channels);
+
+    int bsize   = 32;
+    int w       = std::ceil((float)width / bsize);
+    int h       = std::ceil((float)height / bsize);
+
+    dim3 dimBlock(bsize, bsize);
+    dim3 dimGrid(w, h);
+
+    u_char* h_img_gray = static_cast<u_char*>(malloc(width * height * sizeof(u_char)));
+    u_char* d_img_gray;
+    
+    rc = cudaMallocPitch(&d_img_gray, &pitch, width * sizeof(u_char), height);
+    if (rc)
+    {
+        spdlog::error("Failed GPU image allocation. Error code: {}", rc);
+        return;
+    }
+
+    CPU::to_grayscale(img, h_img_gray, width, height);
+    stbi_write_jpg("../out_gray_CPU.jpeg", width, height, 1, h_img_gray, width);
+    spdlog::info("[CPU] Successfully converted image to grayscale.");
+    
+    GPU::to_grayscale<<<dimGrid, dimBlock>>>(img, d_img_gray, width, height, pitch);
+    cudaDeviceSynchronize();
+    cudaMemcpy2D(h_img_gray, width, d_img_gray, pitch, width * sizeof(u_char), height, cudaMemcpyDeviceToHost);
+    
+    stbi_write_jpg("../out_gray_GPU.jpeg", width, height, 1, h_img_gray, width);
+    spdlog::info("[GPU] Successfully converted image to grayscale.");
+    
+    free(img);
+    free(h_img_gray);
+    cudaFree(d_img_gray);
 }
 
-int main()
+int main(int argc, char** argv)
 {
-    int width, height, channels;
-
-    u_char* img = stbi_load("../image.jpeg", &width, &height, &channels, 0);
-
-    if (img == nullptr) return -1;
-
-    printf("Loaded image %dx%dx%d\n", width, height, channels);
-
-    u_char* img_gray = to_grayscale_CPU(img, width, height);
-    if (img_gray == nullptr) return -1;
-
-    u_char* img_conv = conv_2D_CPU(img, width, height);
-    if (img_conv == nullptr) return -1;
-
-    stbi_write_jpg("../out_gray.jpeg", width, height, 1, img_gray, width);
-    stbi_write_jpg("../out_conv.jpeg", width, height, 1, img_conv, width);
-
-    free(img);
-    free(img_gray);
-    free(img_conv);
-
+    if (argc != 2)
+    {
+        printf("Usage: ./main [path_to_image]\n");
+        return -1;
+    }
+    
+    test_grayscale(argv[1]);
     return 0;
 }
