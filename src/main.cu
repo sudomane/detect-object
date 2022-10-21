@@ -26,13 +26,17 @@ int main()
     printf("Loaded image %dx%dx%d\n", width, height, channels);
 
     u_char* img_gray = to_grayscale_CPU(img, width, height);
-
     if (img_gray == nullptr) return -1;
 
-    stbi_write_jpg("../out.jpeg", width, height, 1, img_gray, width);
+    u_char* img_conv = conv_2D_CPU(img, width, height);
+    if (img_conv == nullptr) return -1;
+
+    stbi_write_jpg("../out_gray.jpeg", width, height, 1, img_gray, width);
+    stbi_write_jpg("../out_conv.jpeg", width, height, 1, img_conv, width);
 
     free(img);
     free(img_gray);
+    free(img_conv);
 
     return 0;
 }
