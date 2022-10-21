@@ -3,12 +3,17 @@
 
 typedef unsigned char u_char;
 
-// CPU API
+/* CPU API */
+namespace CPU
+{
+void to_grayscale(const u_char* src, u_char* dst, int width, int height);
+void conv_2D(const u_char* src, u_char* dst, int width, int height);
+}; // namespace CPU
 
-u_char* to_grayscale_CPU(const u_char* img_in, int width, int height);
-u_char* conv_2D_CPU(u_char* src, int width, int height);
-
-// GPU API
-// FIXME
-
+/* GPU API */ 
+namespace GPU
+{
+__global__ void to_grayscale(u_char* src, u_char* dst, int width, int height, int pitch);
+__global__ void conv_2D(const u_char* src, u_char* dst, int width, int height);
+}; // namespace GPU
 #endif

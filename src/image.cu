@@ -3,40 +3,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/* 
-** CPU API
-* 
-* to_grayscale_CPU
-* gaussian_filter_CPU // FIXME
-*/
+/* CPU API */
 
-u_char* to_grayscale_CPU(const u_char* img_in, int width, int height)
+namespace CPU
 {
-    u_char* img_gray = static_cast<u_char*>(malloc(width * height * sizeof(u_char)));
-
-    if (img_gray == nullptr) return nullptr;
-
+void to_grayscale(const u_char* src, u_char* dst, int width, int height)
+{
     for (int i = 0; i < width; i++)
     {
         for (int j = 0; j < height; j++)
         {
-            u_char R = img_in[(i * height + j) * 3];
-            u_char G = img_in[(i * height + j) * 3 + 1];
-            u_char B = img_in[(i * height + j) * 3 + 2];
+            u_char R = src[(i * height + j) * 3];
+            u_char G = src[(i * height + j) * 3 + 1];
+            u_char B = src[(i * height + j) * 3 + 2];
             
-            img_gray[i * height + j] = (R + G + B) / 3;
+            dst[i * height + j] = (R + G + B) / 3;
         }
     }
-
-    return img_gray;
 }
 
-u_char* conv_2D_CPU(u_char* src, int width, int height)
+void conv_2D(u_char* src, u_char* dst, int width, int height)
 {
-    u_char* dst = static_cast<u_char*>(malloc(width * height * sizeof(u_char)));
-    
-    if (dst == nullptr) return nullptr;
-    
     u_char filter[9] = { 1, 2, 1,
                         2, 4, 2,
                         1, 2, 1};
@@ -67,6 +54,27 @@ u_char* conv_2D_CPU(u_char* src, int width, int height)
                                   bot_left + bot + bot_right;
         }
     }
-
-    return dst;
 }
+}; // namespace CPU
+
+/* GPU API */
+
+namespace GPU
+{
+__global__ void to_grayscale(u_char* src, u_char* dst, int width, int height, int pitch)
+{
+    int x = blockDim.x * blockIdx.x + threadIdx.x;
+    int y = blockDim.y * blockIdx.y + threadIdx.y;
+
+    if (x > width || y > height)
+        return;
+
+    u_char* lineptr = src + (y * pitch) * 3;
+
+    u_char R = lineptr[x];
+    u_char G = lineptr[x+1];
+    u_char B = lineptr[x+2];
+
+    dst[x * pitch + y] = (R + G + B) / 3;
+}
+}; // namespace GPU
