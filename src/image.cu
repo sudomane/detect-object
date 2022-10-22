@@ -71,6 +71,9 @@ __global__ void to_grayscale(u_char* src, u_char* dst, int width, int height, in
     u_char* src_ptr = src + y * spitch;
     u_char* dst_ptr = dst + y * dpitch;
 
-    dst_ptr[x] = (src_ptr[x] + src_ptr[x+1] + src_ptr[x+2])/3; 
+    dst_ptr[x] = (src_ptr[x * n_channels]   // R
+                + src_ptr[x * n_channels + 1]   // G
+                + src_ptr[x * n_channels + 2])  // B
+                / 3.f; 
 }
 }; // namespace GPU
