@@ -10,68 +10,111 @@
 #include "image.hpp"
 
 // Unit test functions
-void test_grayscale(u_char* h_img, u_char* d_img, int width, int height, int n_channels, int d_img_pitch);
-void test_conv_2D(u_char* h_img, u_char* d_img, int width, int height, int n_channels, int d_img_pitch);
+void test_grayscale(u_char* h_img, u_char* d_img, int width, int height, int n_channels, int pitch);
+void test_conv_2D(u_char* h_img, u_char* d_img, int width, int height, int n_channels, int pitch);
+
+// Separated into 2 different functions, too messy otherwise!
+void test_diff_CPU(u_char* h_img_1, u_char* h_img_2, int width, int height, int n_channels);
+void test_diff_GPU(u_char* d_img_1, u_char* d_img_2, int width, int height, size_t pitch, int n_channels);
 
 int main(int argc, char** argv)
 {
-    if (argc != 2)
+    if (argc != 3)
     {
-        printf("Usage: ./main [path_to_image]\n");
+        printf("Usage: ./main [image 1] [image 2]\n");
         return -1;
     }
 
     cudaError_t rc = cudaSuccess;
 
-    u_char* d_img;
-    size_t d_img_pitch;
+    u_char* d_img_1;
+    u_char* d_img_2;
+    size_t pitch;
 
-    u_char* h_img;
+    u_char* h_img_1;
+    u_char* h_img_2;
     int width, height, n_channels;
+    int width_, height_, n_channels_;
 
     // Allocate image on host, for CPU specific tasks
     {
-        h_img = stbi_load(argv[1], &width, &height, &n_channels, 0);
-        if (h_img == nullptr)
+        h_img_1 = stbi_load(argv[1], &width, &height, &n_channels, 0);
+        if (h_img_1 == nullptr)
         {
             spdlog::error("Could not find image {}", argv[1]);
             return -1;
         }
-        spdlog::info("[CPU] Loaded image {} | {}x{}x{}",
-                     argv[1], width, height, n_channels);
-    }
 
-    // Allocate image on device as well, for GPU specific tasks.
-    {
-        rc = cudaMallocPitch(&d_img, &d_img_pitch,
-                             width * n_channels * sizeof(u_char), height);
-        if (rc)
+        h_img_2 = stbi_load(argv[2], &width_, &height_, &n_channels_, 0);
+        if (h_img_2 == nullptr)
         {
-            spdlog::error("Failed device image allocation. Error code {}", rc);
+            spdlog::error("Could not find image {}", argv[1]);
             return -1;
         }
-        rc = cudaMemcpy2D(d_img, d_img_pitch, h_img, width * n_channels,
-                          width * sizeof(u_char), height, cudaMemcpyHostToDevice);
-        if (rc)
+
+        if (width != width_ || height != height_ || n_channels != n_channels_)
         {
-            spdlog::error("Failed to copy image to device. Error code {}", rc);
+            spdlog::error("Image dimensions mismatch! {}x{}x{} against {}x{}x{}",
+                          width, height, n_channels, width_, height_, n_channels_);
             return -1;
         }
         
-        spdlog::info("[GPU] Loaded image {} | {}x{}x{}",
-                     argv[1], width, height, n_channels);
+        spdlog::info("[CPU] Loaded image {} {} | {}x{}x{}",
+                     argv[1], argv[2], width, height, n_channels);
     }
 
-    test_grayscale(h_img, d_img, width, height, n_channels, d_img_pitch);
-    test_conv_2D(h_img, d_img, width, height, n_channels, d_img_pitch);
+    // Allocate image on device as well, for GPU specific tasks.
+    // Since both images are of exact same dimensions, it's ok to overwrite the pitch.
+    {
+        rc = cudaMallocPitch(&d_img_1, &pitch,
+                             width * n_channels * sizeof(u_char), height);
+        if (rc)
+        {
+            spdlog::error("Failed device image (1) allocation. Error code {}", rc);
+            return -1;
+        }
+        rc = cudaMemcpy2D(d_img_1, pitch, h_img_1, width * n_channels,
+                          width * sizeof(u_char), height, cudaMemcpyHostToDevice);
+        if (rc)
+        {
+            spdlog::error("Failed to copy image (1) to device. Error code {}", rc);
+            return -1;
+        }
+        
+        rc = cudaMallocPitch(&d_img_2, &pitch,
+                             width * n_channels * sizeof(u_char), height);
+        if (rc)
+        {
+            spdlog::error("Failed device image (2) allocation. Error code {}", rc);
+            return -1;
+        }
+        rc = cudaMemcpy2D(d_img_2, pitch, h_img_2, width * n_channels,
+                          width * sizeof(u_char), height, cudaMemcpyHostToDevice);
+        if (rc)
+        {
+            spdlog::error("Failed to copy image (2) to device. Error code {}", rc);
+            return -1;
+        }
 
-    free(h_img);
-    cudaFree(d_img);
+        spdlog::info("[GPU] Loaded images {} {} | {}x{}x{}",
+                     argv[1], argv[2], width, height, n_channels);
+    }
+
+    // Running the tests
+    
+    test_grayscale(h_img_1, d_img_1, width, height, n_channels, pitch);
+    test_conv_2D(h_img_1, d_img_1, width, height, n_channels, pitch);
+    test_diff_CPU(h_img_1, h_img_2, width, height, n_channels);
+
+    free(h_img_1);
+    free(h_img_2);
+    cudaFree(d_img_1);
+    cudaFree(d_img_2);
     
     return 0;
 }
 
-void test_grayscale(u_char* h_img, u_char* d_img, int width, int height, int n_channels, int d_img_pitch)
+void test_grayscale(u_char* h_img, u_char* d_img, int width, int height, int n_channels, int pitch)
 {       
     cudaError_t rc  = cudaSuccess;
 
@@ -108,7 +151,7 @@ void test_grayscale(u_char* h_img, u_char* d_img, int width, int height, int n_c
     // GPU Grayscale test
     {
         GPU::to_grayscale<<<dimGrid, dimBlock>>>(d_img, d_img_gray, width, height,
-                                                 d_img_pitch, d_img_gray_pitch, n_channels);
+                                                 pitch, d_img_gray_pitch, n_channels);
         rc = cudaDeviceSynchronize();
         if (rc)
         {
@@ -134,29 +177,15 @@ void test_grayscale(u_char* h_img, u_char* d_img, int width, int height, int n_c
     cudaFree(d_img_gray);
 }
 
-void test_conv_2D(u_char* h_img, u_char* d_img, int width, int height, int n_channels, int d_img_pitch)
+void test_conv_2D(u_char* h_img, u_char* d_img, int width, int height, int n_channels, int pitch)
 {
     u_char* h_img_gray;
     u_char* h_img_conv;
     
     // Allocate host images for grayscale and conv
-    {
-        h_img_gray = static_cast<u_char*>(malloc(width * height * sizeof(u_char)));
-        h_img_conv = static_cast<u_char*>(malloc(width * height * sizeof(u_char)));
-       
-        if (h_img_gray == nullptr)
-        {
-            spdlog::error("Could not allocate memory for grayscale image.");
-            return;
-        }
+    h_img_gray = static_cast<u_char*>(malloc(width * height * sizeof(u_char)));
+    h_img_conv = static_cast<u_char*>(malloc(width * height * sizeof(u_char)));
 
-        if (h_img_conv == nullptr)
-        {
-            spdlog::error("Could not allocate memory for convoluted image.");
-            return;
-        }
-    }
-    
     CPU::to_grayscale(h_img, h_img_gray, width, height, n_channels);
     CPU::conv_2D(h_img_gray, h_img_conv, width, height);
 
@@ -165,4 +194,27 @@ void test_conv_2D(u_char* h_img, u_char* d_img, int width, int height, int n_cha
 
     free(h_img_gray);
     free(h_img_conv);
+}
+
+void test_diff_CPU(u_char* h_img_1, u_char* h_img_2, int width, int height, int n_channels)
+{
+    u_char* img_gray_1 = static_cast<u_char*>(calloc(width * height, sizeof(u_char)));
+    u_char* img_gray_2 = static_cast<u_char*>(calloc(width * height, sizeof(u_char)));
+    u_char* img_dst   = static_cast<u_char*>(calloc(width * height, sizeof(u_char)));
+
+    CPU::to_grayscale(h_img_1, img_gray_1, width, height, n_channels);
+    CPU::to_grayscale(h_img_2, img_gray_2, width, height, n_channels);
+
+    CPU::compute_difference(img_gray_1, img_gray_2, img_dst, width, height);
+    stbi_write_jpg("../out_diff_CPU.jpeg", width, height, 1, img_dst, width);
+    spdlog::info("[CPU] Successfully computed image difference.");
+
+    free(img_gray_1);
+    free(img_gray_2);
+    free(img_dst);
+}
+
+void test_diff_GPU(u_char* d_img_1, u_char* d_img_2, int width, int height, size_t pitch, int n_channels)
+{
+
 }
