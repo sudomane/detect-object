@@ -18,6 +18,9 @@ make
 * [ ] Apply bounding box on results
 * [ ] Display image
 
+### Python prototype
+* [x] CPU prototype
+
 ### CPU Roadmap
 * [x] CPU Grayscale
 * [x] CPU 2D Gaussian blur
