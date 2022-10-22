@@ -15,9 +15,9 @@ void conv_2D(const u_char* src, u_char* dst, int width, int height);
 /* GPU API */ 
 namespace GPU
 {
-__global__ void to_grayscale(u_char* src, u_char* dst,
-                             int width, int height,
-                             int spitch, int dpitch, int n_channels);
-__global__ void conv_2D(const u_char* src, u_char* dst, int width, int height);
+__global__ void to_grayscale(const u_char* src, u_char* dst, int width, int height,
+                             size_t spitch, size_t dpitch, int n_channels);
+__global__ void conv_2D(const u_char* src, u_char* dst, int width, int height,
+                        size_t pitch);
 }; // namespace GPU
 #endif

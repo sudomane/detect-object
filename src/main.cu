@@ -63,7 +63,7 @@ int main(int argc, char** argv)
     }
 
     test_grayscale(h_img, d_img, width, height, n_channels, d_img_pitch);
-    //test_conv_2D(h_img, d_img, width, height, n_channels, d_img_pitch);
+    test_conv_2D(h_img, d_img, width, height, n_channels, d_img_pitch);
 
     free(h_img);
     cudaFree(d_img);
@@ -136,21 +136,28 @@ void test_grayscale(u_char* h_img, u_char* d_img, int width, int height, int n_c
 
 void test_conv_2D(u_char* h_img, u_char* d_img, int width, int height, int n_channels, int d_img_pitch)
 {
-    u_char* h_img_gray = static_cast<u_char*>(malloc(width * height * sizeof(u_char)));
-    if (h_img_gray == nullptr)
+    u_char* h_img_gray;
+    u_char* h_img_conv;
+    
+    // Allocate host images for grayscale and conv
     {
-        spdlog::error("Could not allocate memory for grayscale image.");
-        return;
-    }
+        h_img_gray = static_cast<u_char*>(malloc(width * height * sizeof(u_char)));
+        h_img_conv = static_cast<u_char*>(malloc(width * height * sizeof(u_char)));
+       
+        if (h_img_gray == nullptr)
+        {
+            spdlog::error("Could not allocate memory for grayscale image.");
+            return;
+        }
 
-    u_char* h_img_conv = static_cast<u_char*>(malloc(width * height * sizeof(u_char)));
-    if (h_img_conv == nullptr)
-    {
-        spdlog::error("Could not allocate memory for convoluted image.");
-        return;
+        if (h_img_conv == nullptr)
+        {
+            spdlog::error("Could not allocate memory for convoluted image.");
+            return;
+        }
     }
-
-    CPU::to_grayscale(h_img, h_img_gray, width, height, d_img_pitch);
+    
+    CPU::to_grayscale(h_img, h_img_gray, width, height, n_channels);
     CPU::conv_2D(h_img_gray, h_img_conv, width, height);
 
     stbi_write_jpg("../out_conv_CPU.jpeg", width, height, 1, h_img_conv, width);
