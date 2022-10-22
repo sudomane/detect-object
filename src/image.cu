@@ -7,31 +7,30 @@
 
 namespace CPU
 {
-void to_grayscale(const u_char* src, u_char* dst, int width, int height)
+void to_grayscale(const u_char* src, u_char* dst, int width, int height, int n_channels)
 {
     for (int i = 0; i < width; i++)
     {
         for (int j = 0; j < height; j++)
         {
-            u_char R = src[(i * height + j) * 3];
-            u_char G = src[(i * height + j) * 3 + 1];
-            u_char B = src[(i * height + j) * 3 + 2];
+            u_char R = src[(i * height + j) * n_channels];
+            u_char G = src[(i * height + j) * n_channels + 1];
+            u_char B = src[(i * height + j) * n_channels + 2];
             
-            dst[i * height + j] = (R + G + B) / 3;
+            dst[i * height + j] = (R + G + B) / 3.f;
         }
     }
 }
 
-void conv_2D(u_char* src, u_char* dst, int width, int height)
+void conv_2D(const u_char* src, u_char* dst, int width, int height)
 {
     u_char filter[9] = { 1, 2, 1,
-                        2, 4, 2,
-                        1, 2, 1};
-                        
+                         2, 4, 2,
+                         1, 2, 1};
 
-    u_char top_left, top, top_right;
-    u_char mid_left, mid, mid_right;
-    u_char bot_left, bot, bot_right;
+    u_char top_left, top, top_right; // x x x
+    u_char mid_left, mid, mid_right; // x o x
+    u_char bot_left, bot, bot_right; // x x x
 
     for (int i = 1; i < width-1; i++)
     {
@@ -45,7 +44,7 @@ void conv_2D(u_char* src, u_char* dst, int width, int height)
             mid        = src[i * height + j]           * filter[4];
             mid_right  = src[i * height + j + 1]       * filter[5];
 
-            bot_left   = src[(i+1) * height + j - 1]   * filter[6];
+            bot_left   = src[(i+1) * height + 3 - 1]   * filter[6];
             bot        = src[(i+1) * height + j]       * filter[7];
             bot_right  = src[(i+1) * height + j + 1]   * filter[8];
 
@@ -61,20 +60,17 @@ void conv_2D(u_char* src, u_char* dst, int width, int height)
 
 namespace GPU
 {
-__global__ void to_grayscale(u_char* src, u_char* dst, int width, int height, int pitch)
+__global__ void to_grayscale(u_char* src, u_char* dst, int width, int height, int spitch, int dpitch, int n_channels)
 {
     int x = blockDim.x * blockIdx.x + threadIdx.x;
     int y = blockDim.y * blockIdx.y + threadIdx.y;
 
-    if (x > width || y > height)
+    if (x >= width || y >= height)
         return;
 
-    u_char* lineptr = src + (y * pitch) * 3;
+    u_char* src_ptr = src + y * spitch;
+    u_char* dst_ptr = dst + y * dpitch;
 
-    u_char R = lineptr[x];
-    u_char G = lineptr[x+1];
-    u_char B = lineptr[x+2];
-
-    dst[x * pitch + y] = (R + G + B) / 3;
+    dst_ptr[x] = (src_ptr[x] + src_ptr[x+1] + src_ptr[x+2])/3; 
 }
 }; // namespace GPU
