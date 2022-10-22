@@ -24,7 +24,7 @@ make
 ### CPU Roadmap
 * [x] CPU Grayscale
 * [x] CPU 2D Gaussian blur
-* [ ] CPU Image difference
+* [x] CPU Image difference
 * [ ] CPU Morphological closing/opening
 * [ ] CPU Threshold to keep connected components with high peaks
 
