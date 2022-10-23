@@ -182,15 +182,25 @@ void test_conv_2D(u_char* h_img, u_char* d_img, int width, int height, int n_cha
     u_char* h_img_gray;
     u_char* h_img_conv;
     
-    // Allocate host images for grayscale and conv
-    h_img_gray = static_cast<u_char*>(malloc(width * height * sizeof(u_char)));
-    h_img_conv = static_cast<u_char*>(malloc(width * height * sizeof(u_char)));
+    u_char* d_img_conv;
+    // CPU Convolution test
+    {
+        h_img_gray = static_cast<u_char*>(malloc(width * height * sizeof(u_char)));
+        h_img_conv = static_cast<u_char*>(malloc(width * height * sizeof(u_char)));
 
-    CPU::to_grayscale(h_img, h_img_gray, width, height, n_channels);
-    CPU::conv_2D(h_img_gray, h_img_conv, width, height);
+        CPU::to_grayscale(h_img, h_img_gray, width, height, n_channels);
+        CPU::conv_2D(h_img_gray, h_img_conv, width, height);
 
-    stbi_write_jpg("../out_conv_CPU.jpeg", width, height, 1, h_img_conv, width);
-    spdlog::info("[CPU] Successfully applied 2D convolution on image.");
+        stbi_write_jpg("../out_conv_CPU.jpeg", width, height, 1, h_img_conv, width);
+        spdlog::info("[CPU] Successfully applied 2D convolution on image.");
+    }
+
+    /* MAYBE SEPARATE GPU AND CPU UNIT TESTS??? DAMN BRUTHA*/
+
+    // GPU Convolution test
+    {
+        //GPU::to_grayscale<<<
+    }
 
     free(h_img_gray);
     free(h_img_conv);
