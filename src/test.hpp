@@ -2,6 +2,7 @@
 #define TEST_HPP
 
 /* Unit test functions header */
+void test_open_CPU(unsigned char* h_img_1, unsigned char* h_img_2, int width, int height);
 
 void test_grayscale_CPU(unsigned char* h_img, int width, int height, int n_channels);
 void test_grayscale_GPU(unsigned char* d_img, int width, int height, int n_channels, int pitch);

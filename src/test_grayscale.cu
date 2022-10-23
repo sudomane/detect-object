@@ -10,7 +10,7 @@ void test_grayscale_CPU(unsigned char* h_img, int width, int height, int n_chann
     u_char* h_img_gray = static_cast<u_char*>(calloc(width * height, sizeof(u_char)));
     
     CPU::to_grayscale(h_img, h_img_gray, width, height, n_channels);
-    write_image("../out_gray_CPU.jpeg", width, height, h_img_gray);
+    write_image("../out_gray_CPU.jpeg", width, height, 1, h_img_gray);
     
     spdlog::info("[CPU] Successfully converted image to grayscale.");
 
@@ -62,7 +62,7 @@ void test_grayscale_GPU(unsigned char* d_img, int width, int height, int n_chann
             return;  
         }
 
-        write_image("../out_gray_GPU.jpeg", width, height, h_img_gray);
+        write_image("../out_gray_GPU.jpeg", width, height, 1, h_img_gray);
         spdlog::info("[GPU] Successfully converted image to grayscale.");
     }
 

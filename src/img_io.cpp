@@ -12,7 +12,7 @@ unsigned char* load_image(const char* filename, int* x, int* y, int* n_chan)
     return img;
 }
 
-void write_image(const char* filename, int x, int y, unsigned char* data)
+void write_image(const char* filename, int x, int y, int channels, unsigned char* data)
 {
-    int rc = stbi_write_jpg(filename, x, y, 1, data, x);
+    int rc = stbi_write_jpg(filename, x, y, channels, data, x);
 }

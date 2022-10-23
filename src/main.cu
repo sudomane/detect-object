@@ -89,7 +89,8 @@ int main(int argc, char** argv)
     }
 
     // Running the tests
-    
+    test_open_CPU(h_img_1, h_img_2, width, height);
+
     test_grayscale_CPU(h_img_1, width, height, n_channels);
     test_grayscale_GPU(d_img_1, width, height, n_channels, pitch);
     
