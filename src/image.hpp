@@ -1,26 +1,12 @@
 #ifndef IMAGE_HPP
 #define IMAGE_HPP
 
-// TODO: Add function comments
+/* stb_image wrapper */
 
-typedef unsigned char u_char;
+// The functions in this header are only for loading/writing images.
+// Nothing else. We will barely (if not, never) need to modify this file.
 
-/* CPU API */
-namespace CPU
-{
-void to_grayscale(const u_char* src, u_char* dst, int width, int height, int n_channels);
-void conv_2D(const u_char* src, u_char* dst, int width, int height);
-void compute_difference(const u_char* img_1, const u_char* img_2, u_char* dst, int width, int height);
-}; // namespace CPU
-
-/* GPU API */ 
-namespace GPU
-{
-__global__ void to_grayscale(const u_char* src, u_char* dst, int width, int height,
-                             size_t spitch, size_t dpitch, int n_channels);
-__global__ void conv_2D(const u_char* src, u_char* dst, int width, int height,
-                        size_t pitch);
-__global__ void compute_difference(const u_char* img_1, const u_char* img_2, u_char* dst);
-}; // namespace GPU
+unsigned char* load_image(const char* filename, int* x, int* y, int* n_chan);
+void           write_image(const char* filename, int x, int y, unsigned char* data);
 
 #endif // IMAGE_HPP

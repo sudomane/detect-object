@@ -1,5 +1,4 @@
-#include "image.hpp"
-
+#include "img_operations.hpp"
 
 namespace CPU
 {
@@ -19,7 +18,7 @@ void to_grayscale(const u_char* src, u_char* dst, int width, int height, int n_c
         }
     }
 }
-} // namespace CPU
+} // namespace
 
 namespace GPU
 {

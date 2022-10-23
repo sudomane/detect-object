@@ -1,4 +1,4 @@
-#include "image.hpp"
+#include "img_operations.hpp"
 
 namespace CPU
 {

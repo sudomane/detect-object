@@ -28,7 +28,14 @@ set(CMAKE_CUDA_ARCHITECTURES "75")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
-add_executable(main src/main.cu src/grayscale.cu src/conv_2D.cu src/diff.cu)
+add_executable(main src/main.cu
+                    src/grayscale.cu
+                    src/conv_2D.cu
+                    src/diff.cu
+                    src/test_grayscale.cu
+                    src/test_conv_2D.cu
+                    src/test_diff.cu
+                    src/image.cpp)
 target_compile_features(main PUBLIC cxx_std_17)
 target_link_libraries(main PRIVATE PNG::PNG CLI11::CLI11 spdlog::spdlog)
 
