@@ -61,8 +61,8 @@ int main(int argc, char** argv)
             spdlog::error("Failed device image (1) allocation. Error code {}", rc);
             return -1;
         }
-        rc = cudaMemcpy2D(d_img_1, pitch, h_img_1, width * n_channels,
-                          width * sizeof(u_char), height, cudaMemcpyHostToDevice);
+        rc = cudaMemcpy2D(d_img_1, pitch, h_img_1, width * n_channels * sizeof(u_char),
+                          width * n_channels * sizeof(u_char), height, cudaMemcpyHostToDevice);
         if (rc)
         {
             spdlog::error("Failed to copy image (1) to device. Error code {}", rc);
@@ -76,8 +76,8 @@ int main(int argc, char** argv)
             spdlog::error("Failed device image (2) allocation. Error code {}", rc);
             return -1;
         }
-        rc = cudaMemcpy2D(d_img_2, pitch, h_img_2, width * n_channels,
-                          width * sizeof(u_char), height, cudaMemcpyHostToDevice);
+        rc = cudaMemcpy2D(d_img_2, pitch, h_img_2, width * n_channels * sizeof(u_char),
+                          width * n_channels * sizeof(u_char), height, cudaMemcpyHostToDevice);
         if (rc)
         {
             spdlog::error("Failed to copy image (2) to device. Error code {}", rc);
@@ -90,6 +90,7 @@ int main(int argc, char** argv)
 
     // Running the tests
     test_open_CPU(h_img_1, h_img_2, width, height);
+    test_open_GPU(d_img_1, d_img_2, width, height, pitch);
 
     test_grayscale_CPU(h_img_1, width, height, n_channels);
     test_grayscale_GPU(d_img_1, width, height, n_channels, pitch);

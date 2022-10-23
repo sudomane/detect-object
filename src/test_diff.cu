@@ -7,7 +7,6 @@
 
 void test_diff_CPU(unsigned char* h_img_1, unsigned char* h_img_2, int width, int height, int n_channels)
 {
-
     auto h_img_1_cpy = static_cast<u_char*>(calloc(width * height, sizeof(u_char)));
     auto h_img_2_cpy = static_cast<u_char*>(calloc(width * height, sizeof(u_char)));
 

@@ -18,3 +18,4 @@ void compute_difference(const u_char* img_1, const u_char* img_2, u_char* dst, i
     }
 }
 } // namespace CPU
+
