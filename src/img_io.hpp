@@ -1,5 +1,5 @@
-#ifndef IMAGE_HPP
-#define IMAGE_HPP
+#ifndef IMG_IO_HPP
+#define IMG_IO_HPP
 
 /* stb_image wrapper */
 
@@ -9,4 +9,4 @@
 unsigned char* load_image(const char* filename, int* x, int* y, int* n_chan);
 void           write_image(const char* filename, int x, int y, unsigned char* data);
 
-#endif // IMAGE_HPP
+#endif // IMG_IO_HPP

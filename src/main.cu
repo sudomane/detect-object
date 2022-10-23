@@ -2,7 +2,7 @@
 #include <spdlog/spdlog.h>
 
 #include "test.hpp"
-#include "image.hpp"
+#include "img_io.hpp"
 #include "img_operations.hpp"
 
 int main(int argc, char** argv)

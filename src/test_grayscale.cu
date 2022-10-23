@@ -2,7 +2,7 @@
 
 #include <spdlog/spdlog.h>
 
-#include "image.hpp"
+#include "img_io.hpp"
 #include "img_operations.hpp"
 
 void test_grayscale_CPU(unsigned char* h_img, int width, int height, int n_channels)
