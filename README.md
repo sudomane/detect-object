@@ -29,8 +29,8 @@ make
 * [ ] CPU Threshold to keep connected components with high peaks
 
 ### GPU Roadmap
-* [ ] GPU Grayscale
-* [ ] GPU Convolution
-* [ ] GPU Image difference
+* [x] GPU Grayscale
+* [x] GPU Convolution
+* [x] GPU Image difference
 * [ ] GPU Morphological closing/opening
 * [ ] GPU Threshold to keep connected components with high peaks

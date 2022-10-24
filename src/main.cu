@@ -26,14 +26,14 @@ int main(int argc, char** argv)
 
     // Allocate image on host, for CPU specific tasks
     {
-        h_img_1 = load_image(argv[1], &width, &height, &n_channels);
+        h_img_1 = load_image(argv[1], &width, &height, &n_channels, false);
         if (h_img_1 == nullptr)
         {
             spdlog::error("Could not find image {}", argv[1]);
             return -1;
         }
 
-        h_img_2 = load_image(argv[2], &width_, &height_, &n_channels_);
+        h_img_2 = load_image(argv[2], &width_, &height_, &n_channels_, false);
         if (h_img_2 == nullptr)
         {
             spdlog::error("Could not find image {}", argv[1]);
@@ -61,8 +61,8 @@ int main(int argc, char** argv)
             spdlog::error("Failed device image (1) allocation. Error code {}", rc);
             return -1;
         }
-        rc = cudaMemcpy2D(d_img_1, pitch, h_img_1, width * n_channels,
-                          width * sizeof(u_char), height, cudaMemcpyHostToDevice);
+        rc = cudaMemcpy2D(d_img_1, pitch, h_img_1, width * n_channels * sizeof(u_char),
+                          width * n_channels * sizeof(u_char), height, cudaMemcpyHostToDevice);
         if (rc)
         {
             spdlog::error("Failed to copy image (1) to device. Error code {}", rc);
@@ -76,8 +76,8 @@ int main(int argc, char** argv)
             spdlog::error("Failed device image (2) allocation. Error code {}", rc);
             return -1;
         }
-        rc = cudaMemcpy2D(d_img_2, pitch, h_img_2, width * n_channels,
-                          width * sizeof(u_char), height, cudaMemcpyHostToDevice);
+        rc = cudaMemcpy2D(d_img_2, pitch, h_img_2, width * n_channels * sizeof(u_char),
+                          width * n_channels * sizeof(u_char), height, cudaMemcpyHostToDevice);
         if (rc)
         {
             spdlog::error("Failed to copy image (2) to device. Error code {}", rc);
@@ -88,16 +88,26 @@ int main(int argc, char** argv)
                      argv[1], argv[2], width, height, n_channels);
     }
 
+    const char* image_1 = argv[1];
+    const char* image_2 = argv[2];
+
     // Running the tests
-    
-    test_grayscale_CPU(h_img_1, width, height, n_channels);
-    test_grayscale_GPU(d_img_1, width, height, n_channels, pitch);
-    
-    test_conv_2D_CPU(h_img_1, width, height, n_channels);
-    test_conv_2D_GPU(d_img_1, width, height, n_channels, pitch);
-    
-    test_diff_CPU(h_img_1, h_img_2, width, height, n_channels);
-    test_diff_GPU(d_img_1, d_img_2, width, height, n_channels, pitch);
+
+    // CPU Tests
+    test_open_CPU(h_img_1, h_img_2, width, height);
+    test_grayscale_CPU(image_1, "CPU_out_gray_1.jpeg");
+    test_grayscale_CPU(image_2, "CPU_out_gray_2.jpeg");
+    test_conv_2D_CPU(image_1, "CPU_out_conv_1.jpeg");
+    test_conv_2D_CPU(image_2, "CPU_out_conv_2.jpeg");
+    test_diff_CPU();
+
+    // GPU Tests
+    test_open_GPU(d_img_1, d_img_2, width, height, pitch);
+    test_grayscale_GPU(image_1, "GPU_out_gray_1.jpeg");
+    test_grayscale_GPU(image_2, "GPU_out_gray_2.jpeg");
+    test_conv_2D_GPU(image_1, "GPU_out_conv_1.jpeg");
+    test_conv_2D_GPU(image_2, "GPU_out_conv_2.jpeg");
+    test_diff_GPU();
 
     free(h_img_1);
     free(h_img_2);
