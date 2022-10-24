@@ -9,7 +9,7 @@ mkdir build
 cd build
 cmake ..
 make
-./main [path to image]
+./main [image_1] [image_2]
 ```
 
 ## Roadmap
