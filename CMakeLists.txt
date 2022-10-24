@@ -29,6 +29,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 
 add_executable(main src/main.cu
+                    src/error.cu
                     src/img_io.cpp
                     src/img_grayscale.cu
                     src/img_conv_2D.cu
