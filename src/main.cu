@@ -89,16 +89,17 @@ int main(int argc, char** argv)
     }
 
     // Running the tests
-    test_open_CPU(h_img_1, h_img_2, width, height);
-    test_open_GPU(d_img_1, d_img_2, width, height, pitch);
 
+    // CPU Tests
+    test_open_CPU(h_img_1, h_img_2, width, height);
     test_grayscale_CPU(h_img_1, width, height, n_channels);
-    test_grayscale_GPU(d_img_1, width, height, n_channels, pitch);
-    
     test_conv_2D_CPU(h_img_1, width, height, n_channels);
-    test_conv_2D_GPU(d_img_1, width, height, n_channels, pitch);
-    
     test_diff_CPU(h_img_1, h_img_2, width, height, n_channels);
+
+    // GPU Tests
+    test_open_GPU(d_img_1, d_img_2, width, height, pitch);
+    test_grayscale_GPU(d_img_1, width, height, n_channels, pitch);
+    test_conv_2D_GPU(d_img_1, width, height, n_channels, pitch);
     test_diff_GPU(d_img_1, d_img_2, width, height, n_channels, pitch);
 
     free(h_img_1);
