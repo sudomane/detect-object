@@ -2,70 +2,96 @@
 
 #include <spdlog/spdlog.h>
 
+#include "error.hpp"
 #include "img_io.hpp"
 #include "img_operations.hpp"
 
-void test_grayscale_CPU(unsigned char* h_img, int width, int height, int n_channels)
+void test_grayscale_CPU(const char* input, const char* output)
 {
-    u_char* h_img_gray = static_cast<u_char*>(calloc(width * height, sizeof(u_char)));
+    int width, height, n_chan;
+    u_char* img = load_image(input, &width, &height, &n_chan, false);
     
-    CPU::to_grayscale(h_img, h_img_gray, width, height, n_channels);
-    write_image("../out_gray_CPU.jpeg", width, height, 1, h_img_gray);
+    if (img == nullptr)
+        abortError("File not found. Aborting test.");
     
-    spdlog::info("[CPU] Successfully converted image to grayscale.");
+    u_char* img_gray = static_cast<u_char*>(calloc(width * height, sizeof(u_char)));
+    
+    // CPU grayscale test
+    {
+        CPU::to_grayscale(img, img_gray, width, height, n_chan);
+        write_image(output, width, height, 1, img_gray);
+    
+        spdlog::info("[CPU] Successfully converted image to grayscale.");
+    }
 
-    free(h_img_gray);
+    free(img);
+    free(img_gray);
 }
 
 
-void test_grayscale_GPU(unsigned char* d_img, int width, int height, int n_channels, int pitch)
+void test_grayscale_GPU(const char* input, const char* output)
 {
-    cudaError_t rc  = cudaSuccess;
-
-    int block_size  = 32;
-    int w           = std::ceil((float)width / block_size);
-    int h           = std::ceil((float)height / block_size);
+    int width, height, n_chan;
     
-    dim3 dimGrid(w, h);
-    dim3 dimBlock(block_size, block_size);
-
-    u_char* h_img_gray = static_cast<u_char*>(calloc(width * height, sizeof(u_char)));
-
-    // Initialize buffer to store intermediate device operations for grayscale image
-    // d_img ---> d_img_gray --[Memcpy2D]--> h_img_gray_GPU
-    // <------ device ----->                 <--- host --->
+    auto h_img      = load_image(input, &width, &height, &n_chan, false);    
+    auto h_img_gray = static_cast<u_char*>(calloc(width * height, sizeof(u_char)));
+    
+    size_t host_pitch_RGB  = width * n_chan * sizeof(u_char);
+    size_t host_pitch_gray = width * sizeof(u_char);
+ 
+    cudaError_t rc = cudaSuccess;
+    
+    size_t  dev_pitch_RGB;
+    size_t  dev_pitch_gray;
+    u_char* d_img;
     u_char* d_img_gray;
-    size_t d_img_gray_pitch;
-    rc = cudaMallocPitch(&d_img_gray, &d_img_gray_pitch, width * sizeof(u_char), height);
-    if (rc)
+
+    // Device allocation
     {
-        spdlog::error("Failed device image allocation. Error code: {}", rc);
-        return;
+        // Allocate device buffers
+
+        rc = cudaMallocPitch(&d_img, &dev_pitch_RGB, width * n_chan * sizeof(u_char), height);
+        if (rc)
+            abortError("Failed device image RGB allocation.");
+        
+        rc = cudaMallocPitch(&d_img_gray, &dev_pitch_gray, width * sizeof(u_char), height);
+        if (rc)
+            abortError("Failed device image gray allocation.");
+
+        // Copy images to buffer
+
+        rc = cudaMemcpy2D(d_img, dev_pitch_RGB, h_img, host_pitch_RGB,
+                          width * n_chan * sizeof(u_char), height, cudaMemcpyHostToDevice);
+        if (rc)
+            abortError("Failed to copy image RGB to device.");
     }
 
     // GPU Grayscale test
     {
+        int block_size  = 32;
+        int w           = std::ceil((float)width / block_size);
+        int h           = std::ceil((float)height / block_size);
+    
+        dim3 dimGrid(w, h);
+        dim3 dimBlock(block_size, block_size);
+        
         GPU::to_grayscale<<<dimGrid, dimBlock>>>(d_img, d_img_gray, width, height,
-                                                 pitch, d_img_gray_pitch, n_channels);
+                                                 dev_pitch_RGB, dev_pitch_gray, n_chan);
         rc = cudaDeviceSynchronize();
         if (rc)
-        {
-            spdlog::error("Kernel failed. Error code: {}", rc);
-            return;   
-        }
+            abortError("Kernel failed.");
 
-        rc = cudaMemcpy2D(h_img_gray, width, d_img_gray, d_img_gray_pitch,
-                          width * sizeof(char), height, cudaMemcpyDeviceToHost);
+        rc = cudaMemcpy2D(h_img_gray, host_pitch_gray, d_img_gray, dev_pitch_gray,
+                          width * sizeof(u_char), height, cudaMemcpyDeviceToHost);
         if (rc)
-        {
-            spdlog::error("Failed to copy image from device to host. Error code: {}", rc);
-            return;  
-        }
+            abortError("Failed to copy image gray from device to host.");
 
-        write_image("../out_gray_GPU.jpeg", width, height, 1, h_img_gray);
+        write_image(output, width, height, 1, h_img_gray);
         spdlog::info("[GPU] Successfully converted image to grayscale.");
     }
 
+    free(h_img);
     free(h_img_gray);
+    cudaFree(d_img);
     cudaFree(d_img_gray);
 }
