@@ -6,8 +6,8 @@
 
 void test_open_CPU(unsigned char* h_img_1, unsigned char* h_img_2, int width, int height)
 {
-    write_image("../out_open_CPU_1.jpeg", width, height, 3, h_img_1);
-    write_image("../out_open_CPU_2.jpeg", width, height, 3, h_img_2);
+    write_image("CPU_out_open_1.jpeg", width, height, 3, h_img_1);
+    write_image("CPU_out_open_2.jpeg", width, height, 3, h_img_2);
 
     spdlog::info("[CPU] Successfully saved opened images.");
 }
@@ -20,8 +20,8 @@ void test_open_GPU(u_char* d_img_1, u_char* d_img_2, int width, int height, int 
     cudaMemcpy2D(h_img_1, width * 3, d_img_1, pitch, width * 3 * sizeof(u_char), height, cudaMemcpyDeviceToHost);
     cudaMemcpy2D(h_img_2, width * 3, d_img_2, pitch, width * 3 * sizeof(u_char), height, cudaMemcpyDeviceToHost);
 
-    write_image("../out_open_GPU_1.jpeg", width, height, 3, h_img_1);
-    write_image("../out_open_GPU_2.jpeg", width, height, 3, h_img_2);
+    write_image("GPU_out_open_1.jpeg", width, height, 3, h_img_1);
+    write_image("GPU_out_open_2.jpeg", width, height, 3, h_img_2);
 
     spdlog::info("[GPU] Successfully saved opened images.");
 
