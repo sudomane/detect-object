@@ -6,6 +6,6 @@ void _abortError(const char* msg, const char* fname, int line)
 {
   cudaError_t err = cudaGetLastError();
   spdlog::error("{} ({}, line: {})", msg, fname, line);
-  spdlog::error("Error {}: {}", cudaGetErrorName(err), cudaGetErrorString(err));
+  spdlog::error("[CUDA] Error {}: {}", cudaGetErrorName(err), cudaGetErrorString(err));
   std::exit(1);
 }

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <spdlog/spdlog.h>
 
+#include "error.hpp"
 #include "test.hpp"
 #include "img_io.hpp"
 #include "img_operations.hpp"
@@ -13,33 +14,25 @@ int main(int argc, char** argv)
         return -1;
     }
     
-    cudaError_t rc = cudaSuccess;
-
-    u_char* d_img_1;
-    u_char* d_img_2;
-    size_t pitch;
-
+    const char* image_1 = argv[1];
+    const char* image_2 = argv[2];
+    
     u_char* h_img_1;
     u_char* h_img_2;
+
     int width, height, n_channels;
     int width_, height_, n_channels_;
 
     // Allocate image on host, for CPU specific tasks
     {
-        h_img_1 = load_image(argv[1], &width, &height, &n_channels, false);
+        h_img_1 = load_image(image_1, &width, &height, &n_channels, false);
         if (h_img_1 == nullptr)
-        {
-            spdlog::error("Could not find image {}", argv[1]);
-            return -1;
-        }
+            abortError("Could not find image 1");
 
-        h_img_2 = load_image(argv[2], &width_, &height_, &n_channels_, false);
+        h_img_2 = load_image(image_2, &width_, &height_, &n_channels_, false);
         if (h_img_2 == nullptr)
-        {
-            spdlog::error("Could not find image {}", argv[1]);
-            return -1;
-        }
-
+            abortError("Could not find image 2");
+            
         if (width != width_ || height != height_ || n_channels != n_channels_)
         {
             spdlog::error("Image dimensions mismatch! {}x{}x{} against {}x{}x{}",
@@ -48,48 +41,43 @@ int main(int argc, char** argv)
         }
         
         spdlog::info("[CPU] Loaded images {} {} | {}x{}x{}",
-                     argv[1], argv[2], width, height, n_channels);
+                     image_1, image_2, width, height, n_channels);
     }
+    
+    cudaError_t rc = cudaSuccess;
 
+    u_char* d_img_1;
+    u_char* d_img_2;
+    size_t pitch;
+    
     // Allocate image on device as well, for GPU specific tasks.
     // Since both images are of exact same dimensions, it's ok to overwrite the pitch.
     {
         rc = cudaMallocPitch(&d_img_1, &pitch,
                              width * n_channels * sizeof(u_char), height);
         if (rc)
-        {
-            spdlog::error("Failed device image (1) allocation. Error code {}", rc);
-            return -1;
-        }
+            abortError("Failed device image 1 allocation.");
+
         rc = cudaMemcpy2D(d_img_1, pitch, h_img_1, width * n_channels * sizeof(u_char),
                           width * n_channels * sizeof(u_char), height, cudaMemcpyHostToDevice);
         if (rc)
-        {
-            spdlog::error("Failed to copy image (1) to device. Error code {}", rc);
-            return -1;
-        }
+            abortError("Failed to copy image 1 to device.");
         
         rc = cudaMallocPitch(&d_img_2, &pitch,
                              width * n_channels * sizeof(u_char), height);
         if (rc)
-        {
-            spdlog::error("Failed device image (2) allocation. Error code {}", rc);
-            return -1;
-        }
+            abortError("Failed device image 2 allocation.");
+
         rc = cudaMemcpy2D(d_img_2, pitch, h_img_2, width * n_channels * sizeof(u_char),
                           width * n_channels * sizeof(u_char), height, cudaMemcpyHostToDevice);
         if (rc)
-        {
-            spdlog::error("Failed to copy image (2) to device. Error code {}", rc);
-            return -1;
-        }
+            abortError("Failed to copy image 2 to device.");
 
         spdlog::info("[GPU] Loaded images {} {} | {}x{}x{}",
-                     argv[1], argv[2], width, height, n_channels);
+                     image_1, image_2, width, height, n_channels);
     }
 
-    const char* image_1 = argv[1];
-    const char* image_2 = argv[2];
+
 
     // Running the tests
 
