@@ -7,7 +7,7 @@ namespace CPU
 {
 
 // Opening = min, max, Closing = max, min
-void morph(const unsigned char* src, unsigned char* dst, int width, int height, int kernel_size, bool minimum)
+void morph(const unsigned char* src, unsigned char* dst, int width, int height, bool minimum)
 {
 
     std::array<int, 9> values{};
