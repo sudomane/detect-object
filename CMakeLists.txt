@@ -37,7 +37,9 @@ add_executable(main src/main.cu
                     src/test_grayscale.cu
                     src/test_conv_2D.cu
                     src/test_diff.cu
-                    src/test_open.cu)
+                    src/test_open.cu
+                    src/img_morph.cu
+                    src/test_morph.cu)
 
 target_compile_features(main PUBLIC cxx_std_17)
 target_link_libraries(main PRIVATE PNG::PNG CLI11::CLI11 spdlog::spdlog)
