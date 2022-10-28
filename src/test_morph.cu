@@ -8,7 +8,8 @@
 
 #define  IMG_DIFF_CPU "./CPU_out_diff.jpeg"
 
-void test_morph_erosion_CPU() {
+void test_morph_erosion_CPU()
+{
     int width, height;
 
     auto img_gray = load_image(IMG_DIFF_CPU, &width, &height, nullptr, true);
@@ -53,8 +54,8 @@ void test_morph_dilation_CPU()
     free(img_gray);
 }
 
-void test_morph_opening_CPU(){
-
+void test_morph_opening_CPU()
+{
     int width, height;
 
     auto img_gray = load_image(IMG_DIFF_CPU, &width, &height, nullptr, true);

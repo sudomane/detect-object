@@ -117,6 +117,7 @@ void test_diff_GPU()
             abortError("Failed to copy image from device to host.");
 
         write_image("./GPU_out_diff.jpeg", width, height, 1, h_img_diff);
+        spdlog::info("[GPU] Successfully computed images difference.");
     }
 
     free(h_img_diff);
