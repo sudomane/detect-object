@@ -1,4 +1,5 @@
 #include <array>
+#include <vector>
 #include <algorithm>
 #include "img_operations.hpp"
 
@@ -7,34 +8,85 @@ namespace CPU
 {
 
 // Opening = min, max, Closing = max, min
-void morph(const unsigned char* src, unsigned char* dst, int width, int height, bool minimum)
+void morph(const unsigned char* src, unsigned char* dst, int width, int height, bool minimum, int kernel_size)
 {
+    // Dynamic 1D kernel size
+    std::vector<int> buffer(kernel_size);
 
-    std::array<int, 9> values{};
-    // Gestion sur les bords ?
-    for (int i = 1; i < width-1; i++)
+    // result of first 1D kernel
+    auto tmp = static_cast<unsigned char *>(calloc(width * height, sizeof(unsigned char)));
+
+    // Compute per column kernel from src to tmp [NOT in place]
+    // start at kernel_size / 2, so we can fill the complete buffer with the edges
+    for (int i = kernel_size / 2; i < width - kernel_size / 2; i++)
     {
-        for (int j = 1; j < height-1; j++)
+        // Buffer initialization. WARNING No check on kernel size > width or height
+        for (int i_edges = 0; i_edges < kernel_size; i_edges++)
         {
-            values[0] = src[(j-1) * width + (i-1)];
-            values[1] = src[(j-1) * width + i];
-            values[2] = src[(j-1) * width + (i+1)];
-
-            values[3] = src[j     * width + (i-1)];
-            values[4] = src[j     * width + i];
-            values[5] = src[j     * width + (i+1)];
-
-            values[6] = src[(j+1) * width + (i-1)];
-            values[7] = src[(j+1) * width + i];
-            values[8] = src[(j+1) * width + (i+1)];
-
-            if (minimum) {
-                dst[j * width + i] = *std::min_element(values.begin(), values.end());
-            } else {
-                dst[j * width + i] = *std::max_element(values.begin(), values.end());
+            buffer[i_edges] = src[(i_edges) * width + i];
+        }
+        // Process a column :
+        for (int j = kernel_size / 2; j < height - kernel_size / 2; j++)
+        {
+            // Compute the value from the buffer
+            if (minimum)
+            {
+                tmp[j * width + i] = *std::min_element(buffer.begin(), buffer.end());
+            } else
+            {
+                tmp[j * width + i] = *std::max_element(buffer.begin(), buffer.end());
             }
+
+            // Add the next value : the one at position + kernel_size / 2 overwritten on the previous one
+            // (same position % kernel_size)
+            buffer[(j + kernel_size / 2) % kernel_size] = src[j * width + i + kernel_size / 2];
+
+        }
+        // Add the last value
+        if (minimum)
+        {
+            tmp[(height - 1 - kernel_size / 2) * width + i] = *std::min_element(buffer.begin(), buffer.end());
+        } else
+        {
+            tmp[(height - 1 - kernel_size / 2) * width + i] = *std::max_element(buffer.begin(), buffer.end());
         }
     }
+    // 2nd 1D Kernel
+    // Compute per line kernel from tmp to dst
+    // Process a column : start after kernel_size / 2 element and stop before the end - kernel_size / 2
+    for (int j = kernel_size / 2; j < height - kernel_size / 2; j++)
+    {
+        for (int i = kernel_size / 2; i < width - kernel_size / 2; i++)
+        {
+            // Buffer initialization. WARNING No check on kernel size > width or height
+            for (int i_edges = 0; i_edges < kernel_size; i_edges++)
+            {
+                buffer[i_edges] = tmp[(i_edges) * width + i];
+            }
+
+            // Compute the value from the buffer
+            if (minimum)
+            {
+                dst[j * width + i] = *std::min_element(buffer.begin(), buffer.end());
+            } else
+            {
+                dst[j * width + i] = *std::max_element(buffer.begin(), buffer.end());
+            }
+
+            // Add the next value
+            buffer[j % kernel_size] = tmp[j * width + i];
+        }
+        // Add the last value
+        if (minimum)
+        {
+            tmp[(height - 1 - kernel_size / 2) * width + j] = *std::min_element(buffer.begin(), buffer.end());
+        }
+        else
+        {
+            tmp[(height - 1 - kernel_size / 2) * width + j] = *std::max_element(buffer.begin(), buffer.end());
+        }
+    }
+    free(tmp);
 }
 
 }

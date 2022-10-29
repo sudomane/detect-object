@@ -8,8 +8,7 @@
 
 #define  IMG_DIFF_CPU "./CPU_out_diff.jpeg"
 
-void test_morph_erosion_CPU()
-{
+void test_morph_erosion_CPU(int kernel_size) {
     int width, height;
 
     auto img_gray = load_image(IMG_DIFF_CPU, &width, &height, nullptr, true);
@@ -21,7 +20,7 @@ void test_morph_erosion_CPU()
 
     // CPU diff test
     {
-        CPU::morph(img_gray, img_morph, width, height, true);
+        CPU::morph(img_gray, img_morph, width, height, true, kernel_size);
         write_image("./CPU_out_morph_erosion.jpeg", width, height, 1, img_morph);
 
         spdlog::info("[CPU] Successfully computed image morph erosion operation.");
@@ -31,7 +30,7 @@ void test_morph_erosion_CPU()
     free(img_gray);
 }
 
-void test_morph_dilation_CPU()
+void test_morph_dilation_CPU(int kernel_size)
 {
     int width, height;
 
@@ -44,7 +43,7 @@ void test_morph_dilation_CPU()
 
     // CPU diff test
     {
-        CPU::morph(img_gray, img_morph, width, height, false);
+        CPU::morph(img_gray, img_morph, width, height, false, kernel_size);
         write_image("./CPU_out_morph_dilation.jpeg", width, height, 1, img_morph);
 
         spdlog::info("[CPU] Successfully computed image morph dilation operation.");
@@ -54,8 +53,8 @@ void test_morph_dilation_CPU()
     free(img_gray);
 }
 
-void test_morph_opening_CPU()
-{
+void test_morph_opening_CPU(int kernel_size){
+
     int width, height;
 
     auto img_gray = load_image(IMG_DIFF_CPU, &width, &height, nullptr, true);
@@ -67,8 +66,8 @@ void test_morph_opening_CPU()
 
     // CPU diff test
     {
-        CPU::morph(img_gray, img_morph, width, height, true);
-        CPU::morph(img_morph, img_gray, width, height, false);
+        CPU::morph(img_gray, img_morph, width, height, true, kernel_size);
+        CPU::morph(img_morph, img_gray, width, height, false, kernel_size);
         write_image("./CPU_out_morph_opening.jpeg", width, height, 1, img_gray);
 
         spdlog::info("[CPU] Successfully computed image morph opening operation.");
@@ -78,7 +77,7 @@ void test_morph_opening_CPU()
     free(img_gray);
 }
 
-void test_morph_closing_CPU()
+void test_morph_closing_CPU(int kernel_size)
 {
     int width, height;
 
@@ -91,8 +90,8 @@ void test_morph_closing_CPU()
 
     // CPU diff test
     {
-        CPU::morph(img_gray, img_morph, width, height, false);
-        CPU::morph(img_morph, img_gray, width, height, true);
+        CPU::morph(img_gray, img_morph, width, height, false, kernel_size);
+        CPU::morph(img_morph, img_gray, width, height, true, kernel_size);
         write_image("./CPU_out_morph_closing.jpeg", width, height, 1, img_gray);
 
         spdlog::info("[CPU] Successfully computed image morph closing operation.");
@@ -102,7 +101,7 @@ void test_morph_closing_CPU()
     free(img_gray);
 }
 
-void test_morph_opening_closing_CPU()
+void test_morph_opening_closing_CPU(int kernel_size)
 {
     int width, height;
 
@@ -115,10 +114,10 @@ void test_morph_opening_closing_CPU()
 
     // CPU diff test
     {
-        CPU::morph(img_gray, img_morph, width, height, true);
-        CPU::morph(img_morph, img_gray, width, height, false);
-        CPU::morph(img_gray, img_morph, width, height, false);
-        CPU::morph(img_morph, img_gray, width, height, true);
+        CPU::morph(img_gray, img_morph, width, height, true, kernel_size);
+        CPU::morph(img_morph, img_gray, width, height, false, kernel_size);
+        CPU::morph(img_gray, img_morph, width, height, false, kernel_size);
+        CPU::morph(img_morph, img_gray, width, height, true, kernel_size);
         write_image("./CPU_out_morph_opening_closing.jpeg", width, height, 1, img_gray);
 
         spdlog::info("[CPU] Successfully computed image morph opening closing operation.");

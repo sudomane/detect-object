@@ -11,7 +11,7 @@ namespace CPU
 {
 void to_grayscale(const u_char* src, u_char* dst, int width, int height, int n_channels);
 void conv_2D(const u_char* src, u_char* dst, int width, int height);
-void morph(const u_char* src, u_char* dst, int width, int height, bool minimum);
+void morph(const u_char* src, u_char* dst, int width, int height, bool minimum, int kernel_size);
 void compute_difference(const u_char* img_1, const u_char* img_2, u_char* dst, int width, int height);
 void erosion(const u_char* src, u_char* dst, int width, int height);
 void dilation(const u_char* src, u_char* dst, int width, int height);

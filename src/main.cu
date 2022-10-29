@@ -88,11 +88,11 @@ int main(int argc, char** argv)
     test_conv_2D_CPU("CPU_out_gray_1.jpeg", "CPU_out_conv_1.jpeg");
     test_conv_2D_CPU("CPU_out_gray_2.jpeg", "CPU_out_conv_2.jpeg");
     test_diff_CPU();
-    test_morph_erosion_CPU();
-    test_morph_dilation_CPU();
-    test_morph_opening_CPU();
-    test_morph_closing_CPU();
-    test_morph_opening_closing_CPU();
+    test_morph_erosion_CPU(5);
+    test_morph_dilation_CPU(5);
+    test_morph_opening_CPU(5);
+    test_morph_closing_CPU(5);
+    test_morph_opening_closing_CPU(5);
 
     // GPU Tests
     test_open_GPU(d_img_1, d_img_2, width, height, pitch);

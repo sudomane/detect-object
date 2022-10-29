@@ -14,10 +14,10 @@ void test_conv_2D_GPU(const char* input, const char* output);
 void test_diff_CPU();
 void test_diff_GPU();
 
-void test_morph_erosion_CPU();
-void test_morph_dilation_CPU();
-void test_morph_opening_CPU();
-void test_morph_closing_CPU();
-void test_morph_opening_closing_CPU();
+void test_morph_erosion_CPU(int kernel_size);
+void test_morph_dilation_CPU(int kernel_size);
+void test_morph_opening_CPU(int kernel_size);
+void test_morph_closing_CPU(int kernel_size);
+void test_morph_opening_closing_CPU(int kernel_size);
 
 #endif
