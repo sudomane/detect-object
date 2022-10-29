@@ -16,6 +16,9 @@ void morph(const unsigned char* src, unsigned char* dst, int width, int height, 
     // result of first 1D kernel
     auto tmp = static_cast<unsigned char *>(calloc(width * height, sizeof(unsigned char)));
 
+    // Edges initialization
+    memcpy(tmp, src, sizeof(unsigned char) * width * height);
+    memcpy(dst, src, sizeof(unsigned char ) * width * height);
     // Compute per column kernel from src to tmp [NOT in place]
     // start at kernel_size / 2, so we can fill the complete buffer with the edges
     for (int i = kernel_size / 2; i < width - kernel_size / 2; i++)
@@ -56,13 +59,14 @@ void morph(const unsigned char* src, unsigned char* dst, int width, int height, 
     // Process a column : start after kernel_size / 2 element and stop before the end - kernel_size / 2
     for (int j = kernel_size / 2; j < height - kernel_size / 2; j++)
     {
+        // Buffer initialization. WARNING No check on kernel size > width or height
+        for (int i_edges = 0; i_edges < kernel_size; i_edges++)
+        {
+            buffer[i_edges] = tmp[(i_edges) * width + j];
+        }
         for (int i = kernel_size / 2; i < width - kernel_size / 2; i++)
         {
-            // Buffer initialization. WARNING No check on kernel size > width or height
-            for (int i_edges = 0; i_edges < kernel_size; i_edges++)
-            {
-                buffer[i_edges] = tmp[(i_edges) * width + i];
-            }
+
 
             // Compute the value from the buffer
             if (minimum)
