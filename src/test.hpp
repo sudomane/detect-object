@@ -18,6 +18,6 @@ void test_morph_erosion_CPU(int kernel_size);
 void test_morph_dilation_CPU(int kernel_size);
 void test_morph_opening_CPU(int kernel_size);
 void test_morph_closing_CPU(int kernel_size);
-void test_morph_opening_closing_CPU(int kernel_size);
+void test_morph_opening_closing_CPU();
 
 #endif

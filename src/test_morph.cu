@@ -101,7 +101,7 @@ void test_morph_closing_CPU(int kernel_size)
     free(img_gray);
 }
 
-void test_morph_opening_closing_CPU(int kernel_size)
+void test_morph_opening_closing_CPU()
 {
     int width, height;
 
@@ -114,10 +114,11 @@ void test_morph_opening_closing_CPU(int kernel_size)
 
     // CPU diff test
     {
-        CPU::morph(img_gray, img_morph, width, height, true, kernel_size);
-        CPU::morph(img_morph, img_gray, width, height, false, kernel_size);
-        CPU::morph(img_gray, img_morph, width, height, false, kernel_size);
-        CPU::morph(img_morph, img_gray, width, height, true, kernel_size);
+        CPU::morph(img_gray, img_morph, width, height, true, 51);
+        CPU::morph(img_morph, img_gray, width, height, false, 51);
+        CPU::morph(img_gray, img_morph, width, height, false, 21);
+        CPU::morph(img_morph, img_gray, width, height, true, 21);
+
         write_image("./CPU_out_morph_opening_closing.jpeg", width, height, 1, img_gray);
 
         spdlog::info("[CPU] Successfully computed image morph opening closing operation.");
