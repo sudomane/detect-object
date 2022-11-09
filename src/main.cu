@@ -85,8 +85,8 @@ int main(int argc, char** argv)
     test_open_CPU(h_img_1, h_img_2, width, height);
     test_grayscale_CPU(image_1, "CPU_out_gray_1.jpeg");
     test_grayscale_CPU(image_2, "CPU_out_gray_2.jpeg");
-    test_conv_2D_CPU("CPU_out_gray_1.jpeg", "CPU_out_conv_1.jpeg");
-    test_conv_2D_CPU("CPU_out_gray_2.jpeg", "CPU_out_conv_2.jpeg");
+    test_conv_2D_CPU("CPU_out_gray_1.jpeg", "CPU_out_conv_1.jpeg", 20, 20/4.);
+    test_conv_2D_CPU("CPU_out_gray_2.jpeg", "CPU_out_conv_2.jpeg", 20, 20/4.);
     test_diff_CPU();
     test_morph_erosion_CPU(7);
     test_morph_dilation_CPU(7);

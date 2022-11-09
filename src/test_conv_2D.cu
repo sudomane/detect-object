@@ -6,7 +6,7 @@
 #include "img_io.hpp"
 #include "img_operations.hpp"
 
-void test_conv_2D_CPU(const char* input, const char* output)
+void test_conv_2D_CPU(const char* input, const char* output, int kernel_size, double sigma)
 {
     int width, height;
     auto img_gray = load_image(input, &width, &height, nullptr, true);
@@ -18,7 +18,7 @@ void test_conv_2D_CPU(const char* input, const char* output)
     
     // CPU conv 2D test
     {
-        CPU::conv_2D(img_gray, img_conv, width, height);
+        CPU::conv_2D(img_gray, img_conv, width, height, kernel_size, sigma);
         write_image(output, width, height, 1, img_conv);
 
         spdlog::info("[CPU] Successfully applied 2D convolution.");
