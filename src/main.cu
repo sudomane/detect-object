@@ -81,6 +81,7 @@ int main(int argc, char** argv)
 
     // Running the tests
 
+
     // CPU Tests
     test_open_CPU(h_img_1, h_img_2, width, height);
     test_grayscale_CPU(image_1, "CPU_out_gray_1.jpeg");
@@ -100,6 +101,8 @@ int main(int argc, char** argv)
     test_grayscale_GPU(image_2, "GPU_out_gray_2.jpeg");
     test_conv_2D_GPU("GPU_out_gray_1.jpeg", "GPU_out_conv_1.jpeg");
     test_conv_2D_GPU("GPU_out_gray_2.jpeg", "GPU_out_conv_2.jpeg");
+    test_conv_2D_GPU_2("GPU_out_gray_1.jpeg", "GPU_2_out_conv_1.jpeg", 20, 20/4.);
+    test_conv_2D_GPU_2("GPU_out_gray_2.jpeg", "GPU_2_out_conv_2.jpeg", 20, 20/4.);
     test_diff_GPU();
 
     free(h_img_1);

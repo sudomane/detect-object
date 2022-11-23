@@ -59,6 +59,8 @@ void conv_2D(const u_char* src, u_char* dst, int width, int height, int kernel_s
 
 namespace GPU
 {
+
+    // Kernel 3*3 fixed size
 __global__ void conv_2D(const u_char* src, u_char* dst, int width, int height, size_t pitch)
 {
     int x = blockDim.x * blockIdx.x + threadIdx.x;
@@ -91,5 +93,30 @@ __global__ void conv_2D(const u_char* src, u_char* dst, int width, int height, s
                                   mid_left + mid + mid_right +
                                   bot_left + bot + bot_right);    
 
+}
+
+// Dynamic size kernel
+__global__ void conv_2D_2(const u_char* src, u_char* dst, int width, int height, size_t pitch, const double* kernel, int kernel_size) {
+    int id = blockDim.x * blockIdx.x + threadIdx.x; // id = i * width + j
+    int center = (kernel_size - 1) / 2;
+
+    // Vérification des cas aux bords de l'image : ignorer
+    if ((id % width <= center) ||
+            (id % width >= width - center) ||
+            (id / width <= center) ||
+            (id / width >= height - center)) {
+        return;
+    }
+    int i = id / width;
+    int j = id % width;
+    int ii, jj;
+    // Calcul de la convolution
+    for (int ki = 0; ki < kernel_size; ki++) {
+        for (int kj = 0; kj < kernel_size; kj++) {
+            ii = i + ki - center;
+            jj = j + kj - center;
+            dst[id] += src[ii * width + jj] * kernel[ki * kernel_size + kj];
+        }
+    }
 }
 } // namespace GPU

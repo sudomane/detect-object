@@ -10,6 +10,7 @@ void test_grayscale_GPU(const char* input, const char* output);
 
 void test_conv_2D_CPU(const char* input, const char* output, int kernel_size, double sigma);
 void test_conv_2D_GPU(const char* input, const char* output);
+void test_conv_2D_GPU_2(const char* input, const char* output, int kernel_size, double sigma);
 
 void test_diff_CPU();
 void test_diff_GPU();

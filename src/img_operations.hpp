@@ -23,6 +23,8 @@ __global__ void to_grayscale(const u_char* src, u_char* dst, int width, int heig
                              size_t spitch, size_t dpitch, int n_channels);
 __global__ void conv_2D(const u_char* src, u_char* dst, int width, int height,
                         size_t pitch);
+__global__ void conv_2D_2(const u_char* src, u_char* dst, int width, int height,
+                              size_t pitch, const double* kernel, int kernel_size);
 __global__ void compute_difference(const u_char* img_1, const u_char* img_2, u_char* dst,
                                    int width, int height, int pitch);
 __global__ void erosion(const u_char* src, u_char* dst, int width, int height, int pitch);

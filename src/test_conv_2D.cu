@@ -5,6 +5,7 @@
 #include "error.hpp"
 #include "img_io.hpp"
 #include "img_operations.hpp"
+#include "utils.h"
 
 void test_conv_2D_CPU(const char* input, const char* output, int kernel_size, double sigma)
 {
@@ -76,6 +77,74 @@ void test_conv_2D_GPU(const char* input, const char* output)
         dim3 dimBlock(block_size, block_size);
         
         GPU::conv_2D<<<dimGrid, dimBlock>>>(d_img_gray, d_img_conv, width, height, dev_pitch);
+        rc = cudaDeviceSynchronize();
+        if (rc)
+            abortError("Kernel failed.");
+
+        rc = cudaMemcpy2D(h_img_conv, host_pitch, d_img_conv, dev_pitch,
+                          width * sizeof(u_char), height, cudaMemcpyDeviceToHost);
+        if (rc)
+            abortError("Failed to copy image from device to host.");
+
+        write_image(output, width, height, 1, h_img_conv);
+        spdlog::info("[GPU] Successfully applied 2D convolution.");
+    }
+
+    free(h_img_gray);
+    free(h_img_conv);
+    cudaFree(d_img_gray);
+    cudaFree(d_img_conv);
+}
+
+void test_conv_2D_GPU_2(const char* input, const char* output, int kernel_size, double sigma) {
+
+    int width, height;
+    auto h_img_gray = load_image(input, &width, &height, nullptr, true);
+
+    if (h_img_gray == nullptr)
+        abortError("File not found. Aborting test.");
+
+    auto h_img_conv = static_cast<u_char*>(calloc(width * height, sizeof(u_char)));
+
+    size_t host_pitch = width * sizeof(u_char);
+
+    cudaError_t rc = cudaSuccess;
+
+    size_t  dev_pitch;
+    u_char* d_img_conv;
+    u_char* d_img_gray;
+
+    // Device allocation
+    {
+        // Allocate device buffers
+
+        rc = cudaMallocPitch(&d_img_conv, &dev_pitch, width * sizeof(u_char), height);
+        if (rc)
+            abortError("Failed device conv 2D image allocation.");
+
+        rc = cudaMallocPitch(&d_img_gray, &dev_pitch, width * sizeof(u_char), height);
+        if (rc)
+            abortError("Failed device grayscale image allocation.");
+
+        // Copy images to buffer
+
+        rc = cudaMemcpy2D(d_img_gray, dev_pitch, h_img_gray, host_pitch,
+                          width * sizeof(u_char), height, cudaMemcpyHostToDevice);
+        if (rc)
+            abortError("Failed to copy grayscale image to device.");
+    }
+    {
+        int size = width * height;
+        int blocksize = 1024; // 1024 thread per blocks
+        int gridsize = size / blocksize; // 1 thread per pixel
+        double *kernel = gen_kernel(kernel_size, sigma);
+        double *kernel_d;
+        cudaMalloc(&kernel_d, kernel_size * kernel_size * sizeof(double));
+        cudaMemcpy(kernel_d, kernel, kernel_size * kernel_size * sizeof(double), cudaMemcpyHostToDevice);
+        GPU::conv_2D_2<<<gridsize, blocksize>>>(d_img_gray,d_img_conv, width, height, dev_pitch, kernel_d ,kernel_size);
+        free(kernel);
+        cudaFree(kernel_d);
+
         rc = cudaDeviceSynchronize();
         if (rc)
             abortError("Kernel failed.");
