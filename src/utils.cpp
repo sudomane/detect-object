@@ -10,8 +10,8 @@ static double gaussian(double x, double mu, double sigma ) {
 
 
 // Génération du kernel de la taille souhaitée
-double* gen_kernel(int kernel_size, double sigma) {
-    double *kernel2d = static_cast<double *>(malloc(kernel_size * kernel_size * sizeof(double)));
+float* gen_kernel(int kernel_size, double sigma) {
+    float *kernel2d = static_cast<float *>(malloc(kernel_size * kernel_size * sizeof(float)));
     double sum, x;
     // compute values
     for (int row = 0; row < kernel_size; row++)
