@@ -96,26 +96,28 @@ __global__ void conv_2D(const u_char* src, u_char* dst, int width, int height, s
 }
 
 // Dynamic size kernel
-__global__ void conv_2D_2(const u_char* src, u_char* dst, int width, int height, size_t pitch, const double* kernel, int kernel_size) {
+__global__ void conv_2D_2(const u_char* src, u_char* dst, int width, int height, size_t pitch, const float* kernel, int kernel_size) {
     int id = blockDim.x * blockIdx.x + threadIdx.x; // id = i * width + j, 1 thread per pixel
     int center = (kernel_size - 1) / 2;
 
+
+    int i = id / pitch;
+    int j = id % pitch;
     // Vérification des cas aux bords de l'image : ignorer
-    if ((id % width < center) ||
-            (id % width >= width - center) ||
-            (id / width < center) ||
-            (id / width >= height - center)) {
+    if ((j < center) ||
+            (j >= pitch - center - 1) ||
+            (i < center) ||
+            (i >= height - center - 1)) {
         return;
     }
-    int i = id / width;
-    int j = id % width;
+
     int ii, jj;
-    // Calcul de la convolution
+    // Calcul de la convolution : Chaque thread calcule la convolution sur "son" pixel avec le noyau.
     for (int ki = 0; ki < kernel_size; ki++) {
         for (int kj = 0; kj < kernel_size; kj++) {
             ii = i + ki - center;
             jj = j + kj - center;
-            dst[id] += src[ii * width + jj] * kernel[ki * kernel_size + kj];
+            dst[i * pitch + j] += src[ii * pitch + jj] * kernel[ki * kernel_size + kj];
         }
     }
 }
