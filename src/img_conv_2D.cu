@@ -97,13 +97,13 @@ __global__ void conv_2D(const u_char* src, u_char* dst, int width, int height, s
 
 // Dynamic size kernel
 __global__ void conv_2D_2(const u_char* src, u_char* dst, int width, int height, size_t pitch, const double* kernel, int kernel_size) {
-    int id = blockDim.x * blockIdx.x + threadIdx.x; // id = i * width + j
+    int id = blockDim.x * blockIdx.x + threadIdx.x; // id = i * width + j, 1 thread per pixel
     int center = (kernel_size - 1) / 2;
 
     // Vérification des cas aux bords de l'image : ignorer
-    if ((id % width <= center) ||
+    if ((id % width < center) ||
             (id % width >= width - center) ||
-            (id / width <= center) ||
+            (id / width < center) ||
             (id / width >= height - center)) {
         return;
     }
