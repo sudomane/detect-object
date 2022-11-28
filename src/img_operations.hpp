@@ -15,6 +15,7 @@ void morph(const u_char* src, u_char* dst, int width, int height, bool minimum, 
 void compute_difference(const u_char* img_1, const u_char* img_2, u_char* dst, int width, int height);
 void erosion(const u_char* src, u_char* dst, int width, int height);
 void dilation(const u_char* src, u_char* dst, int width, int height);
+void connected_components(u_char* buffer, int width, int height);
 }; // namespace CPU
 
 namespace GPU
@@ -29,6 +30,7 @@ __global__ void compute_difference(const u_char* img_1, const u_char* img_2, u_c
                                    int width, int height, int pitch);
 __global__ void erosion(const u_char* src, u_char* dst, int width, int height, int pitch);
 __global__ void dilation(const u_char* src, u_char* dst, int width, int height, int pitch);
+__global__ void connected_components(u_char* buffer, int width, int height);
 }; // namespace GPU
 
 #endif // IMG_OPERATIONS_HPP
