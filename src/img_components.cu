@@ -13,10 +13,8 @@ namespace CPU
         // FIRST PASS
         int index;
         u_char current_label = 2;
-        std::vector<std::set<u_char>> label_matching {};
         // Add "padding" sets for ease of manipulation
-        label_matching.emplace_back();
-        label_matching.emplace_back();
+        std::map<int, int> label_matching{{0,0}, {1,0}, {2, 2}};
         std::array<u_char, 4> neighbors{};
         for (auto line = 0; line < height; line++) {
             for (auto column = 0; column < width; column++) {
@@ -44,16 +42,14 @@ namespace CPU
                 if (min_label == UCHAR_MAX) {
                     buffer[index] = current_label;
                     current_label++;
-                    // Add new label matching
-                    // Add new label value to the matching set
-                    label_matching.emplace_back();
-                    label_matching.back().insert({current_label});
+                    // Add new label matching and value to the matching map
+                    label_matching.insert({current_label, current_label});
                 } else {
                     // Update correspondance
                     for (const auto& value : neighbors) {
                         if (value != UCHAR_MAX) {
                             // Update set with the lowest label
-                            label_matching[value].insert(min_label);
+                            label_matching.find(value)->second = min_label;
                         }
                     }
                     // Labellise the pixel
@@ -61,14 +57,17 @@ namespace CPU
                 }
             }
         }
-
+        // Handle nested label value by going from first to last label
+        for (auto& match : label_matching) {
+            match.second = label_matching.find(match.second)->second;
+        }
         // SECOND PASS
         for (auto line = 0; line < height; line++) {
             for (auto column = 0; column < width; column++) {
                 index = line * width + column;
                 if (buffer[index] != 0) {
                     // Not robust but it works. Need to handle nested matching, ex : Label 3 should be labelled 2 but label 2 should be labelled 1
-                    buffer[index] = (*label_matching[*label_matching[buffer[index]].upper_bound(0)].upper_bound(0)) * 16; // ADD VALUE FOR DEBUGGING
+                    buffer[index] = label_matching.find(buffer[index])->second * 16; // ADD VALUE FOR DEBUGGING
                 }
             }
         }
