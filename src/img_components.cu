@@ -8,18 +8,19 @@
 namespace CPU
 {
     // Thresholding + Two pass algorithm from wikipedia
-    void connected_components(u_char* buffer, int width, int height)
+    void connected_components(u_char* buffer, int width, int height, int threshold)
     {
         // FIRST PASS
         int index;
-        u_char current_label = 2;
-        // Add "padding" sets for ease of manipulation
-        std::map<int, int> label_matching{{0,0}, {1,0}, {2, 2}};
+        u_char current_label = 1;
+        // Add "padding" map {0, 0}, and initial {1, 1} matching for ease of manipulation
+        std::map<int, int> label_matching{{0,0}, {1,1}};
         std::array<u_char, 4> neighbors{};
         for (auto line = 0; line < height; line++) {
             for (auto column = 0; column < width; column++) {
                 index = line * width + column;
-                if (buffer[index] == 0){
+                if (buffer[index] < threshold){
+                    buffer[index] = 0;
                     continue; // Background
                 }
                 std::fill(neighbors.begin(), neighbors.end(), UCHAR_MAX);
@@ -57,7 +58,7 @@ namespace CPU
                 }
             }
         }
-        // Handle nested label value by going from first to last label
+        // Handle nested label value by going from first to last label and updating corresponding label
         for (auto& match : label_matching) {
             match.second = label_matching.find(match.second)->second;
         }
@@ -66,22 +67,7 @@ namespace CPU
             for (auto column = 0; column < width; column++) {
                 index = line * width + column;
                 if (buffer[index] != 0) {
-                    // Not robust but it works. Need to handle nested matching, ex : Label 3 should be labelled 2 but label 2 should be labelled 1
                     buffer[index] = label_matching.find(buffer[index])->second * 16; // ADD VALUE FOR DEBUGGING
-                }
-            }
-        }
-    }
-
-    void threshold(u_char* buffer, int width, int height, int threshold) {
-        int index;
-        for (auto line = 0; line < height; line++) {
-            for (auto column = 0; column < width; column++) {
-                index = line * width + column;
-                if (buffer[index] > threshold) {
-                    buffer[index] = 1;
-                } else {
-                    buffer[index] = 0;
                 }
             }
         }

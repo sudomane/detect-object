@@ -23,7 +23,6 @@ void test_morph_opening_CPU(int kernel_size);
 void test_morph_closing_CPU(int kernel_size);
 void test_morph_opening_closing_CPU();
 
-void test_threshold_CPU(int threshold);
-void test_connected_components_CPU();
+void test_connected_components_CPU(int threshold);
 
 #endif
