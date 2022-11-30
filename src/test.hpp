@@ -15,10 +15,15 @@ void test_conv_2D_GPU_2(const char* input, const char* output, int kernel_size, 
 void test_diff_CPU();
 void test_diff_GPU();
 
+
+
 void test_morph_erosion_CPU(int kernel_size);
 void test_morph_dilation_CPU(int kernel_size);
 void test_morph_opening_CPU(int kernel_size);
 void test_morph_closing_CPU(int kernel_size);
 void test_morph_opening_closing_CPU();
+
+void test_threshold_CPU(int threshold);
+void test_connected_components_CPU();
 
 #endif

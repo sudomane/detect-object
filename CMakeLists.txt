@@ -34,11 +34,13 @@ add_executable(main src/main.cu
                     src/img_grayscale.cu
                     src/img_conv_2D.cu
                     src/img_diff.cu
+                    src/img_morph.cu
+                    src/img_components.cu
+                    src/test_components.cu
                     src/test_grayscale.cu
                     src/test_conv_2D.cu
                     src/test_diff.cu
                     src/test_open.cu
-                    src/img_morph.cu
                     src/test_morph.cu
                     src/utils.cpp
                     src/utils.h)

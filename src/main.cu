@@ -94,6 +94,8 @@ int main(int argc, char** argv)
     test_morph_opening_CPU(5);
     test_morph_closing_CPU(5);
     test_morph_opening_closing_CPU();
+    test_threshold_CPU(20);
+    test_connected_components_CPU();
 
     // GPU Tests
     test_open_GPU(d_img_1, d_img_2, width, height, pitch);

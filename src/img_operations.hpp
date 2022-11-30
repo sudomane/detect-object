@@ -13,9 +13,8 @@ void to_grayscale(const u_char* src, u_char* dst, int width, int height, int n_c
 void conv_2D(const u_char* src, u_char* dst, int width, int height, int kernel_size, double sigma);
 void morph(const u_char* src, u_char* dst, int width, int height, bool minimum, int kernel_size);
 void compute_difference(const u_char* img_1, const u_char* img_2, u_char* dst, int width, int height);
-void erosion(const u_char* src, u_char* dst, int width, int height);
-void dilation(const u_char* src, u_char* dst, int width, int height);
 void connected_components(u_char* buffer, int width, int height);
+void threshold(u_char* buffer, int width, int height, int threshold);
 }; // namespace CPU
 
 namespace GPU
