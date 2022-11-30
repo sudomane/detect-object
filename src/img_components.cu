@@ -1,7 +1,6 @@
 #include <map>
 #include <algorithm>
 #include <vector>
-#include <set>
 
 #include "img_operations.hpp"
 
@@ -19,24 +18,26 @@ namespace CPU
             for (auto column = 0; column < width; column++) {
                 index = line * width + column;
                 std::fill(neighbors.begin(), neighbors.end(), UCHAR_MAX);
-                if (buffer[index] != 1){
+                if (buffer[index] == 0){
                     continue; // Background
                 }
                 // Check 4 neighbours around + already processed
-                if (line > 0 && buffer[index-line]){
-                    neighbors[0] = std::min(neighbors[0], buffer[index - line]); // North pixel
-                    if (column > 0 && buffer[index - line - 1]) {
-                        neighbors[1] = std::min(neighbors[1], buffer[index - line - 1]); // North-west pixel
+                if (line > 0 && buffer[index - width]){
+                    neighbors[0] = buffer[index - width]; // North pixel
+                    if (column > 0 && buffer[index - width - 1]) {
+                        neighbors[1] = buffer[index - width - 1]; // North-west pixel
                     }
-                    if (column < width - 1 && buffer[index - line + 1]) {
-                        neighbors[2] = std::min(neighbors[2], buffer[index - line + 1]); // North-east pixel
+                    if (column < width - 1 && buffer[index - width + 1]) {
+                        neighbors[2] = buffer[index - width + 1]; // North-east pixel
                     }
                 }
                 if (column > 0 && buffer[index - 1]) {
-                    neighbors[3] = std::min(neighbors[3], buffer[index - 1]); // West pixel
+                    neighbors[3] = buffer[index - 1]; // West pixel
                 }
-                // No other neighbours
-                if (*std::min_element(neighbors.begin(), neighbors.end()) == UCHAR_MAX) {
+                // Compute minimum neighbour label
+                u_char min_label = *std::min_element(neighbors.begin(), neighbors.end());
+                // No labelled neighbour
+                if (min_label == UCHAR_MAX) {
                     buffer[index] = current_label;
                     current_label++;
                     // Add new label matching
@@ -47,11 +48,11 @@ namespace CPU
                     for (const auto& value : neighbors) {
                         if (value != UCHAR_MAX) {
                             // Update map with the lowest label
-                            label_matching.find(value)->second = *std::min_element(neighbors.begin(), neighbors.end());
+                            label_matching.find(value)->second = min_label;
                         }
                     }
                     // Labellise the pixel
-                    buffer[index] = *std::min_element(neighbors.begin(), neighbors.end());
+                    buffer[index] = min_label;
                 }
             }
         }
@@ -61,7 +62,7 @@ namespace CPU
             for (auto column = 0; column < width; column++) {
                 index = line * width + column;
                 if (buffer[index] != 0) {
-                    buffer[index] = label_matching.find(buffer[index])->second;
+                    buffer[index] = label_matching.find(buffer[index])->second * 4; // ADD VALUE FOR DEBUGGING
                 }
             }
         }
@@ -73,7 +74,7 @@ namespace CPU
             for (auto column = 0; column < width; column++) {
                 index = line * width + column;
                 if (buffer[index] > threshold) {
-                    buffer[index] = 1;
+                    buffer[index] = 128;
                 } else {
                     buffer[index] = 0;
                 }
