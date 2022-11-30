@@ -13,6 +13,9 @@ namespace CPU
         int index;
         u_char current_label = 2;
         std::map<u_char, u_char> label_matching{{0,0}, {1, 0}}; // Add "padding" sets for ease of manipulation
+        // FIXME Problème de propagation des labels avec le set, il faudrait un update "récurrent" mais pas trouvé de solution
+        // FIXME propre en utilisant les containers standards... Set serait utile (plutôt que map) mais chiant d'accéder aux key
+        // TODO Remplacer map par vector<set<int>> + recherche en vector[].upper_bound(0) ?
         std::array<u_char, 4> neighbors{};
         for (auto line = 0; line < height; line++) {
             for (auto column = 0; column < width; column++) {
@@ -62,7 +65,7 @@ namespace CPU
             for (auto column = 0; column < width; column++) {
                 index = line * width + column;
                 if (buffer[index] != 0) {
-                    buffer[index] = label_matching.find(buffer[index])->second * 4; // ADD VALUE FOR DEBUGGING
+                    buffer[index] = label_matching.find(buffer[index])->second * 16; // ADD VALUE FOR DEBUGGING
                 }
             }
         }
@@ -74,7 +77,7 @@ namespace CPU
             for (auto column = 0; column < width; column++) {
                 index = line * width + column;
                 if (buffer[index] > threshold) {
-                    buffer[index] = 128;
+                    buffer[index] = 1;
                 } else {
                     buffer[index] = 0;
                 }
