@@ -1,115 +1,73 @@
-#include <stdio.h>
-#include <spdlog/spdlog.h>
+#include <iostream>
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
+#include <opencv4/opencv2/opencv.hpp>
 
-#include "error.hpp"
-#include "test.hpp"
-#include "img_io.hpp"
-#include "img_operations.hpp"
+#include "object_detection.hpp"
 
-int main(int argc, char** argv)
-{
-    if (argc != 3)
-    {
-        printf("Usage: ./main [image 1] [image 2]\n");
-        return -1;
-    }
+#define WIDTH  640
+#define HEIGHT 480
+
+int main() {
+    // Open the video capture
+    cv::VideoCapture capture(0);
+
+    // Set the video frame size
+    capture.set(cv::CAP_PROP_FRAME_WIDTH, WIDTH);
+    capture.set(cv::CAP_PROP_FRAME_HEIGHT, HEIGHT);
+
+    // Allocate memory on the GPU
+    int *d_coords;
+    size_t d_pitch;
     
-    const char* image_1 = argv[1];
-    const char* image_2 = argv[2];
+    unsigned char *d_frame;
+    unsigned char *d_ref_frame;
+    cudaMallocPitch(&d_frame, &d_pitch, WIDTH * sizeof(unsigned char), HEIGHT);
+    cudaMallocPitch(&d_ref_frame, &d_pitch, WIDTH * sizeof(unsigned char), HEIGHT);
     
-    u_char* h_img_1;
-    u_char* h_img_2;
+    cudaMalloc(&d_coords, 4 * sizeof(int));
 
-    int width, height, n_channels;
-    int width_, height_, n_channels_;
+    // Allocate memory on the Host
+    int h_coords[4] = {0, 0, 0, 0};
 
-    // Allocate image on host, for CPU specific tasks
-    {
-        h_img_1 = load_image(image_1, &width, &height, &n_channels, false);
-        if (h_img_1 == nullptr)
-            abortError("Could not find image 1");
+    // Loop through the video frames
+    cv::Mat frame, gray_frame;
+    cv::Mat ref_frame;
+    
+    while (capture.read(frame)) {
+        cv::cvtColor(frame, gray_frame, cv::COLOR_BGR2GRAY);
 
-        h_img_2 = load_image(image_2, &width_, &height_, &n_channels_, false);
-        if (h_img_2 == nullptr)
-            abortError("Could not find image 2");
-            
-        if (width != width_ || height != height_ || n_channels != n_channels_)
+        if (cv::waitKey(1) == 's')
         {
-            spdlog::error("Image dimensions mismatch! {}x{}x{} against {}x{}x{}",
-                          width, height, n_channels, width_, height_, n_channels_);
-            return -1;
+            ref_frame = gray_frame.clone();
+            continue;
         }
+
+        cudaMemcpy2D(d_ref_frame, d_pitch, ref_frame.data, d_pitch, WIDTH * sizeof(unsigned char), HEIGHT, cudaMemcpyHostToDevice);
+        cudaMemcpy2D(d_frame, d_pitch, frame.data, d_pitch, WIDTH * sizeof(unsigned char), HEIGHT, cudaMemcpyHostToDevice);
+        cudaMemcpy(&h_coords, d_coords, 4 * sizeof(int), cudaMemcpyDeviceToHost);
+
+        dim3 block(16, 16);
+        dim3 grid((WIDTH + block.x - 1) / block.x, (HEIGHT + block.y - 1) / block.y);
+        //object_detection<<<grid, block>>>(d_frame, d_ref_frame, d_coords, d_pitch);
         
-        spdlog::info("[CPU] Loaded images {} {} | {}x{}x{}",
-                     image_1, image_2, width, height, n_channels);
-    }
-    
-    cudaError_t rc = cudaSuccess;
+        cv::Point pt1(h_coords[0], h_coords[1]);
+        cv::Point pt2(h_coords[2], h_coords[3]);
 
-    u_char* d_img_1;
-    u_char* d_img_2;
-    size_t pitch;
-    
-    // Allocate image on device as well, for GPU specific tasks.
-    // Since both images are of exact same dimensions, it's ok to overwrite the pitch.
-    {
-        rc = cudaMallocPitch(&d_img_1, &pitch,
-                             width * n_channels * sizeof(u_char), height);
-        if (rc)
-            abortError("Failed device image 1 allocation.");
+        // Draw the objects on the frame
+        cv::rectangle(frame, pt1, pt2, cv::Scalar(0, 0, 255), 2);
 
-        rc = cudaMemcpy2D(d_img_1, pitch, h_img_1, width * n_channels * sizeof(u_char),
-                          width * n_channels * sizeof(u_char), height, cudaMemcpyHostToDevice);
-        if (rc)
-            abortError("Failed to copy image 1 to device.");
-        
-        rc = cudaMallocPitch(&d_img_2, &pitch,
-                             width * n_channels * sizeof(u_char), height);
-        if (rc)
-            abortError("Failed device image 2 allocation.");
+        // Show the frame
+        cv::imshow("Object Detection", gray_frame);
 
-        rc = cudaMemcpy2D(d_img_2, pitch, h_img_2, width * n_channels * sizeof(u_char),
-                          width * n_channels * sizeof(u_char), height, cudaMemcpyHostToDevice);
-        if (rc)
-            abortError("Failed to copy image 2 to device.");
-
-        spdlog::info("[GPU] Loaded images {} {} | {}x{}x{}",
-                     image_1, image_2, width, height, n_channels);
+        // Exit if the user presses 'q'
+        if (cv::waitKey(1) == 'q') break;
     }
 
+    // Release the video capture and GPU memory
+    capture.release();
+    cudaFree(d_frame);
+    cudaFree(d_coords);
 
-
-    // Running the tests
-
-
-    // CPU Tests
-    test_open_CPU(h_img_1, h_img_2, width, height);
-    test_grayscale_CPU(image_1, "CPU_out_gray_1.jpeg");
-    test_grayscale_CPU(image_2, "CPU_out_gray_2.jpeg");
-    test_conv_2D_CPU("CPU_out_gray_1.jpeg", "CPU_out_conv_1.jpeg", 20, 20/4.);
-    test_conv_2D_CPU("CPU_out_gray_2.jpeg", "CPU_out_conv_2.jpeg", 20, 20/4.);
-    test_diff_CPU();
-    test_morph_erosion_CPU(7);
-    test_morph_dilation_CPU(7);
-    test_morph_opening_CPU(5);
-    test_morph_closing_CPU(5);
-    test_morph_opening_closing_CPU();
-    test_connected_components_CPU(20);
-
-    // GPU Tests
-    test_open_GPU(d_img_1, d_img_2, width, height, pitch);
-    test_grayscale_GPU(image_1, "GPU_out_gray_1.jpeg");
-    test_grayscale_GPU(image_2, "GPU_out_gray_2.jpeg");
-    test_conv_2D_GPU("GPU_out_gray_1.jpeg", "GPU_out_conv_1.jpeg");
-    test_conv_2D_GPU("GPU_out_gray_2.jpeg", "GPU_out_conv_2.jpeg");
-    test_conv_2D_GPU_2("GPU_out_gray_1.jpeg", "GPU_2_out_conv_1.jpeg", 20, 20/4.);
-    test_conv_2D_GPU_2("GPU_out_gray_2.jpeg", "GPU_2_out_conv_2.jpeg", 20, 20/4.);
-    test_diff_GPU();
-
-    free(h_img_1);
-    free(h_img_2);
-    cudaFree(d_img_1);
-    cudaFree(d_img_2);
-    
     return 0;
 }
